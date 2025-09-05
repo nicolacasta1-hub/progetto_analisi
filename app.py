@@ -63,13 +63,12 @@ if selected == "Caricamento Dati":
 
 # --- PAGINA: DASHBOARD GLOBALE ---
 if selected == "Dashboard Globale":
-    if st.session_state.data is None:
+    if st.session_state['df'] is None:
         st.warning("Nessun dato caricato. Per favore, vai alla pagina 'Caricamento Dati' e carica un file Excel.")
         st.stop()
 
     st.title("Dashboard Globale di Analisi Strategica")
-    with st.container(border=True): 
-        raw_df = st.session_state.data
+    raw_df = st.session_state['df']
 
     selected_period = st.selectbox(
         "Seleziona Periodo di Analisi",
