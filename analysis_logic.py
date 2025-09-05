@@ -3,15 +3,18 @@ import pandas as pd
 def arricchisci_dati_base(df_input):
     """
     Prende un DataFrame grezzo e aggiunge le colonne calcolate fondamentali.
-    Questo è il primo passo per ogni analisi successiva.
     """
-    # Lavoriamo su una copia per sicurezza
     df = df_input.copy()
     
-    # Calcoliamo le nuove colonne
-    df['Ricavo Totale'] = df['PrezzoVendita'] * df['QuantitaVenduta']
-    df['Margine Unitario'] = df['PrezzoVendita'] - df['Costoingredienti']
-    df['Margine Totale'] = df['Margine Unitario'] * df['QuantitaVenduta']
+    # --- MODIFICA LE STRINGHE QUI SOTTO CON I NOMI ESATTI DEL TUO FILE EXCEL ---
+    
+    nome_colonna_prezzo = "PrezzoVendita"  # <-- METTI QUI IL NOME ESATTO DELLA COLONNA PREZZO
+    nome_colonna_quantita = "QuantitaVenduta" # <-- METTI QUI IL NOME ESATTO DELLA COLONNA QUANTITÀ
+    nome_colonna_costo = "CostoIngredienti" # <-- METTI QUI IL NOME ESATTO DELLA COLONNA COSTO
+    
+    df['Ricavo Totale'] = df[nome_colonna_prezzo] * df[nome_colonna_quantita]
+    df['Margine Unitario'] = df[nome_colonna_prezzo] - df[nome_colonna_costo]
+    df['Margine Totale'] = df['Margine Unitario'] * df[nome_colonna_quantita]
     
     return df
 
