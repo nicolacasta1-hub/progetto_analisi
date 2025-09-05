@@ -71,73 +71,82 @@ if selected == "Caricamento Dati":
 
 # --- PAGINA: DASHBOARD GLOBALE ---
 if selected == "Dashboard Globale":
-    if st.session_state['df'] is None:
-        st.warning("Nessun dato caricato. Per favore, vai alla pagina 'Caricamento Dati' e carica un file Excel.")
-        st.stop()
 
-    st.title("Dashboard Globale di Analisi Strategica")
-    raw_df = st.session_state['df']
-
-    selected_period = st.selectbox(
-        "Seleziona Periodo di Analisi",
-        options=['Anno Intero', 'Q1', 'Q2', 'Q3', 'Q4']
+    st.title("Global Dashboard 📈")
+    uploaded_file = st.file_uploader(
+        "Scegli un file Excel per iniziare", 
+        type="xlsx"
     )
-    st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
-
-    # --- LOGICA DI CALCOLO DINAMICO ---
-    kpi_precedenti = None
-    quarter_map = {'Q2': ['Vendite_Q1'], 'Q3': ['Vendite_Q2'], 'Q4': ['Vendite_Q3']}
     
-    if selected_period == 'Anno Intero':
-        cols_correnti = ['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4']
-    else:
-        cols_correnti = [f'Vendite_{selected_period}']
+    if uploaded_file is not None:
+        raw_df = load_data(uploaded_file)
+        
+        # --- SELETTORE PERIODO ---
+        periodo_selezionato = st.selectbox(
+            "Seleziona Periodo di Analisi",
+            options=['Anno Intero', 'Q1', 'Q2', 'Q3', 'Q4']
+        )
 
-    df_periodo = arricchisci_dati_base(raw_df, cols_correnti)
-    kpi_attuali = calcola_kpi_globali(df_periodo)
+        # --- LOGICA DI CALCOLO DINAMICA E CORRETTA ---
+        kpi_precedenti = None
+        df_corrente = None
 
-    if selected_period in quarter_map:
-        cols_precedenti = quarter_map[selected_period]
-        df_periodo_prec = arricchisci_dati_base(raw_df, cols_precedenti)
-        kpi_precedenti = calcola_kpi_globali(df_periodo_prec)
-
-    # --- SEZIONE KPI CON TREND ---
-    st.markdown("<hr>", unsafe_allow_html=True)
-    kpi_cols = st.columns(4)
-    kpi_names = list(kpi_attuali.keys())
-    
-    for i, col in enumerate(kpi_cols):
-        with col:
-            delta = None
-            if kpi_precedenti:
-                val_attuale = kpi_attuali[kpi_names[i]]
-                val_precedente = kpi_precedenti[kpi_names[i]]
-                if val_precedente != 0:
-                    delta_val = ((val_attuale - val_precedente) / val_precedente) * 100
-                    delta = f"{delta_val:.1f}%"
+        if periodo_selezionato == 'Anno Intero':
+            cols_correnti = ['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4']
+            df_corrente = arricchisci_dati_base(raw_df, cols_correnti)
+        else: # Se è stato selezionato un trimestre
+            q_corrente = f'Vendite_{periodo_selezionato}'
+            df_corrente = arricchisci_dati_base(raw_df, [q_corrente])
             
-            val_formattato = f"€ {kpi_attuali[kpi_names[i]]:,.0f}" if "€" in kpi_names[i] or "Ricavi" in kpi_names[i] or "Margine" in kpi_names[i] else f"{kpi_attuali[kpi_names[i]]:,.0f}"
-            if "%" in kpi_names[i]: val_formattato = f"{kpi_attuali[kpi_names[i]]:.1f}%"
-            
-            st.metric(label=kpi_names[i], value=val_formattato, delta=delta)
-    
-    # --- SEZIONE INSIGHTS AUTOMATICI ---
-st.subheader("Insight Strategici Automatici")
-# Insight basati sul trend (Livello 1)
-insight_trend_list = analizza_kpi_trends(kpi_attuali, kpi_precedenti)
-for insight in insight_trend_list:
-    st.warning(insight)
+            q_num = int(periodo_selezionato[1])
+            if q_num > 1: # Se non è il Q1, calcoliamo il periodo precedente
+                q_precedente = f'Vendite_Q{q_num - 1}'
+                df_precedente = arricchisci_dati_base(raw_df, [q_precedente])
+                kpi_precedenti = calcola_kpi_globali(df_precedente)
 
-# Insight basati sulla struttura del business (Livello 2 e 3)
-# Creiamo il dataframe annuale arricchito per l'analisi strutturale
-df_annuale = arricchisci_dati_base(raw_df, ['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4'])
-insights_strutturali_list = analizza_struttura_business(df_annuale)
+        # Calcoliamo i KPI per il periodo corrente
+        kpi_correnti = calcola_kpi_globali(df_corrente)
+        
+        st.divider()
 
-if insights_strutturali_list:
-    with st.container(border=True):
-        for insight in insights_strutturali_list:
-            # Usiamo st.markdown per una formattazione più ricca
+        # --- KPI CARDS CON TREND DINAMICO ---
+        st.header("KPI Globali")
+        col1, col2, col3, col4 = st.columns(4)
+
+        # Calcoliamo il delta (variazione) solo se kpi_precedenti esiste
+        delta_ricavi = None
+        if kpi_precedenti:
+            delta_ricavi = (kpi_correnti['Ricavi Totali'] - kpi_precedenti['Ricavi Totali']) / kpi_precedenti['Ricavi Totali']
+        
+        with col1: 
+            st.metric(
+                label="Ricavi Totali", 
+                value=f"€ {kpi_correnti['Ricavi Totali']:.2f}",
+                delta=f"{delta_ricavi:.1%}" if delta_ricavi is not None else None
+            )
+        
+        # (Puoi fare lo stesso per gli altri KPI se vuoi mostrare anche il loro trend)
+        with col2: st.metric(label="Margine Totale", value=f"€ {kpi_correnti['Margine di Contribuzione Totale']:.2f}")
+        with col3: st.metric(label="Profitto Lordo Medio", value=f"{kpi_correnti['Profitto Lordo Medio (%)']:.1f} %")
+        with col4: st.metric(label="Unità Vendute", value=f"{kpi_correnti['Unità Vendute']}")
+        
+        st.divider()
+
+        # --- INSIGHTS STRATEGICI AUTOMATICI ---
+        st.header("🔍 Insight Strategici Automatici")
+        
+        # Ora la chiamata alla funzione è corretta!
+        insight_trend_list = analizza_kpi_trends(kpi_correnti, kpi_precedenti)
+        if insight_trend_list:
+            st.info(insight_trend_list[0])
+
+        # Le analisi strutturali usano sempre i dati annuali completi
+        df_annuale = arricchisci_dati_base(raw_df, ['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4'])
+        insight_strutturali_list = analizza_struttura_business(df_annuale)
+        for insight in insight_strutturali_list:
             st.info(insight)
+        
+        st.divider()
     
     st.markdown("<hr>", unsafe_allow_html=True)
 
