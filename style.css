@@ -4,12 +4,21 @@
 }
 
 /* Crea il pannello di contenuto principale chiaro con angoli arrotondati */
-/* Selettore robusto per il contenitore principale del contenuto */
 div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] {
-    background-color: #FFFFFF;
+    background-color: #f3f4f7ff;
     color: #111111;
     border-radius: 15px;
     padding: 2rem;
+}
+
+/* MODIFICA: Regole per la Sidebar Bianca */
+[data-testid="stSidebar"] {
+    background-color: #f3f4f7ff;
+}
+
+/* Testo generale della sidebar */
+[data-testid="stSidebar"] .st-emotion-cache-10oheav { 
+    color: #111111;
 }
 
 /* Stile per i componenti Metric (KPI Cards) */
@@ -33,16 +42,17 @@ div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] div[data-t
 .nav-link {
     font-size: 14px !important;
     transition: all 0.3s ease !important;
+    color: #111111 !important; /* Testo nero per le voci del menu */
 }
 
 /* Stile per l'opzione attiva nel menu */
 .nav-link-selected {
-    background-color: #FFFFFF !important;
-    color: #000000 !important;
+    background-color: #262730 !important; /* Sfondo scuro per la voce attiva */
+    color: #FFFFFF !important;       /* Testo bianco per la voce attiva */
     font-weight: bold;
 }
 
 /* Effetto Hover per le opzioni del menu */
 .nav-link:not(.nav-link-selected):hover {
-    background-color: #283044 !important;
+    background-color: #F0F2F6 !important; /* Sfondo grigio chiaro al passaggio */
 }
