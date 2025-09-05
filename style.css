@@ -1,0 +1,10 @@
+/* style.css */
+
+/* Questo codice prende di mira i box dei KPI di Streamlit */
+[data-testid="stMetric"] {
+    background-color: #393939;
+    border: 1px solid #393939;
+    padding: 15px;
+    border-radius: 10px;
+    color: white;
+}

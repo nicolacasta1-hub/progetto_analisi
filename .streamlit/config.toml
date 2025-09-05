@@ -1,0 +1,15 @@
+[theme]
+# Colore primario per gli elementi interattivi
+primaryColor = "#007BFF"
+
+# Colore dello sfondo principale dell'app
+backgroundColor = "#0E1117"
+
+# Colore di sfondo per la sidebar e altri elementi
+secondaryBackgroundColor = "#262730"
+
+# Colore del testo
+textColor = "#FAFAFA"
+
+# Tipo di font
+font = "sans serif"
