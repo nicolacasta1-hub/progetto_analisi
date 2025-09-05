@@ -1,152 +1,71 @@
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from streamlit_option_menu import option_menu
-# Importazioni dal file di logica di analisi
-from analysis_logic import (
-    arricchisci_dati_base,
-    calcola_kpi_globali,
-    prepara_dati_trimestrali_per_grafico_annuale,
-    prepara_dati_categorie,
-    prepara_dati_top_flop
-)
-
-# Importazioni dal nuovo file di logica degli insight
-from insights_logic import (
-    analizza_kpi_trends,
-    analizza_struttura_business
-)
-
-# --- CONFIGURAZIONE PAGINA E CSS ---
-st.set_page_config(page_title="Decision Intelligence Dashboard", layout="wide")
-
-def local_css(file_name):
-    try:
-        with open(file_name) as f:
-            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-    except FileNotFoundError:
-        st.error(f"File CSS '{file_name}' non trovato. Assicurati che sia nella stessa cartella di 'app.py'.")
-
-local_css("style.css")
-
-# --- GESTIONE DELLO STATO ---
-if 'df' not in st.session_state:
-    st.session_state['df'] = None
-
-# --- SIDEBAR ---
-with st.sidebar:
-    selected = option_menu(
-        menu_title=None,
-        options=["Caricamento Dati", "Dashboard Globale", "Analisi Categorie", "Analisi Prodotti", "Analisi Comparativa", "Laboratorio Interattivo"],
-        icons=["cloud-upload", "bar-chart-line", "pie-chart", "list-task", "braces", "tools"],
-        menu_icon="robot",
-        default_index=0
-    )
-    st.sidebar.markdown("---")
-    with st.sidebar.expander("Assistente AI (in sviluppo)"):
-        st.info("Una futura versione integrerà un assistente conversazionale per porre domande dirette sui dati.")
-
-# --- PAGINA: CARICAMENTO DATI ---
-if selected == "Caricamento Dati":
-    st.title("Caricamento Dati e Contesto Aziendale")
-    st.info("Inizia caricando il file Excel con i dati di vendita.")
-    
-    uploaded_file = st.file_uploader("Seleziona il file .xlsx", type=["xlsx"])
-    
-    if uploaded_file:
-        try:
-            st.session_state['df'] = pd.read_excel(uploaded_file)
-            st.success("File caricato con successo! Passa al 'Dashboard Globale' per l'analisi.")
-        except Exception as e:
-            st.error(f"Errore nella lettura del file: {e}")
-            st.session_state['df'] = None
-            
-    st.text_area(
-        "Contesto Aziendale (Opzionale)",
-        "Inserisci qui i tuoi obiettivi, punti di forza o debolezza.",
-        height=150,
-        key="business_context"
-    )
+# Nel vostro file app.py, sostituite tutto il codice da questa riga in poi:
+# if selected == "Dashboard Globale":
 
 # --- PAGINA: DASHBOARD GLOBALE ---
 if selected == "Dashboard Globale":
+    st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
+    if st.session_state['df'] is None:
+        st.warning("Nessun dato caricato. Per favore, vai alla pagina 'Caricamento Dati' e carica un file Excel.")
+        st.stop()
 
-    st.title("Global Dashboard 📈")
-    uploaded_file = st.file_uploader(
-        "Scegli un file Excel per iniziare", 
-        type="xlsx"
+    st.title("Dashboard Globale di Analisi Strategica")
+    raw_df = st.session_state['df']
+
+    selected_period = st.selectbox(
+        "Seleziona Periodo di Analisi",
+        options=['Anno Intero', 'Q1', 'Q2', 'Q3', 'Q4']
     )
+
+    # --- LOGICA DI CALCOLO DINAMICO ---
+    kpi_precedenti = None
+    quarter_map = {'Q2': ['Vendite_Q1'], 'Q3': ['Vendite_Q2'], 'Q4': ['Vendite_Q3']}
     
-    if uploaded_file is not None:
-        raw_df = load_data(uploaded_file)
-        
-        # --- SELETTORE PERIODO ---
-        periodo_selezionato = st.selectbox(
-            "Seleziona Periodo di Analisi",
-            options=['Anno Intero', 'Q1', 'Q2', 'Q3', 'Q4']
-        )
+    if selected_period == 'Anno Intero':
+        cols_correnti = ['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4']
+    else:
+        cols_correnti = [f'Vendite_{selected_period}']
 
-        # --- LOGICA DI CALCOLO DINAMICA E CORRETTA ---
-        kpi_precedenti = None
-        df_corrente = None
+    df_periodo = arricchisci_dati_base(raw_df, cols_correnti)
+    kpi_attuali = calcola_kpi_globali(df_periodo)
 
-        if periodo_selezionato == 'Anno Intero':
-            cols_correnti = ['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4']
-            df_corrente = arricchisci_dati_base(raw_df, cols_correnti)
-        else: # Se è stato selezionato un trimestre
-            q_corrente = f'Vendite_{periodo_selezionato}'
-            df_corrente = arricchisci_dati_base(raw_df, [q_corrente])
+    if selected_period in quarter_map:
+        cols_precedenti = quarter_map[selected_period]
+        df_periodo_prec = arricchisci_dati_base(raw_df, cols_precedenti)
+        kpi_precedenti = calcola_kpi_globali(df_periodo_prec)
+
+    # --- SEZIONE KPI CON TREND ---
+    st.subheader("Indicatori di Performance Chiave (KPIs)")
+    kpi_cols = st.columns(4)
+    kpi_names = list(kpi_attuali.keys())
+    
+    for i, col in enumerate(kpi_cols):
+        with col:
+            delta = None
+            if kpi_precedenti:
+                val_attuale = kpi_attuali[kpi_names[i]]
+                val_precedente = kpi_precedenti[kpi_names[i]]
+                if val_precedente != 0:
+                    delta_val = ((val_attuale - val_precedente) / val_precedente) * 100
+                    delta = f"{delta_val:.1f}%"
             
-            q_num = int(periodo_selezionato[1])
-            if q_num > 1: # Se non è il Q1, calcoliamo il periodo precedente
-                q_precedente = f'Vendite_Q{q_num - 1}'
-                df_precedente = arricchisci_dati_base(raw_df, [q_precedente])
-                kpi_precedenti = calcola_kpi_globali(df_precedente)
+            val_formattato = f"€ {kpi_attuali[kpi_names[i]]:,.0f}" if "Ricavi" in kpi_names[i] or "Margine" in kpi_names[i] else f"{kpi_attuali[kpi_names[i]]:,.0f}"
+            if "%" in kpi_names[i]: val_formattato = f"{kpi_attuali[kpi_names[i]]:.1f}%"
+            
+            st.metric(label=kpi_names[i], value=val_formattato, delta=delta)
+    
+    # --- SEZIONE INSIGHTS AUTOMATICI ---
+    st.subheader("Insight Strategici Automatici")
+    insight_trend_list = analizza_kpi_trends(kpi_attuali, kpi_precedenti)
+    for insight in insight_trend_list:
+        st.warning(insight)
 
-        # Calcoliamo i KPI per il periodo corrente
-        kpi_correnti = calcola_kpi_globali(df_corrente)
-        
-        st.divider()
+    df_annuale = arricchisci_dati_base(raw_df, ['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4'])
+    insights_strutturali_list = analizza_struttura_business(df_annuale)
 
-        # --- KPI CARDS CON TREND DINAMICO ---
-        st.header("KPI Globali")
-        col1, col2, col3, col4 = st.columns(4)
-
-        # Calcoliamo il delta (variazione) solo se kpi_precedenti esiste
-        delta_ricavi = None
-        if kpi_precedenti:
-            delta_ricavi = (kpi_correnti['Ricavi Totali'] - kpi_precedenti['Ricavi Totali']) / kpi_precedenti['Ricavi Totali']
-        
-        with col1: 
-            st.metric(
-                label="Ricavi Totali", 
-                value=f"€ {kpi_correnti['Ricavi Totali']:.2f}",
-                delta=f"{delta_ricavi:.1%}" if delta_ricavi is not None else None
-            )
-        
-        # (Puoi fare lo stesso per gli altri KPI se vuoi mostrare anche il loro trend)
-        with col2: st.metric(label="Margine Totale", value=f"€ {kpi_correnti['Margine di Contribuzione Totale']:.2f}")
-        with col3: st.metric(label="Profitto Lordo Medio", value=f"{kpi_correnti['Profitto Lordo Medio (%)']:.1f} %")
-        with col4: st.metric(label="Unità Vendute", value=f"{kpi_correnti['Unità Vendute']}")
-        
-        st.divider()
-
-        # --- INSIGHTS STRATEGICI AUTOMATICI ---
-        st.header("🔍 Insight Strategici Automatici")
-        
-        # Ora la chiamata alla funzione è corretta!
-        insight_trend_list = analizza_kpi_trends(kpi_correnti, kpi_precedenti)
-        if insight_trend_list:
-            st.info(insight_trend_list[0])
-
-        # Le analisi strutturali usano sempre i dati annuali completi
-        df_annuale = arricchisci_dati_base(raw_df, ['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4'])
-        insight_strutturali_list = analizza_struttura_business(df_annuale)
-        for insight in insight_strutturali_list:
-            st.info(insight)
-        
-        st.divider()
+    if insights_strutturali_list:
+        with st.container(border=True):
+            for insight in insights_strutturali_list:
+                st.info(insight)
     
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -159,8 +78,7 @@ if selected == "Dashboard Globale":
         fig_trend.add_trace(go.Scatter(x=df_trend['Trimestre'], y=df_trend['Profittabilità (%)'], name='Profittabilità (%)', mode='lines+markers', yaxis="y2"))
         fig_trend.update_layout(
             paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            yaxis=dict(showgrid=False), yaxis2=dict(title="Profittabilità (%)", overlaying="y", side="right", showgrid=False)
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
         st.plotly_chart(fig_trend, use_container_width=True)
 
@@ -190,6 +108,7 @@ if selected == "Dashboard Globale":
         fig_flop = px.bar(df_flop, x='Margine Totale', y='Nome Piatto', orientation='h', title='Flop 10 Prodotti per Margine Totale')
         fig_flop.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total descending', 'showgrid': False}, xaxis={'showgrid': False})
         st.plotly_chart(fig_flop, use_container_width=True)
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Placeholder per le altre pagine
