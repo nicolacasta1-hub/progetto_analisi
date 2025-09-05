@@ -63,16 +63,17 @@ if selected == "Caricamento Dati":
 
 # --- PAGINA: DASHBOARD GLOBALE ---
 if selected == "Dashboard Globale":
-    if st.session_state['df'] is None:
-        st.warning("Nessun dato caricato. Per favore, vai alla pagina 'Caricamento Dati' e carica un file Excel.")
-        st.stop()
+    with st.container(border=True):
+        if st.session_state['df'] is None:
+            st.warning("Nessun dato caricato. Per favore, vai alla pagina 'Caricamento Dati' e carica un file Excel.")
+            st.stop()
 
-    st.title("Dashboard Globale di Analisi Strategica")
-    raw_df = st.session_state['df']
+        st.title("Dashboard Globale di Analisi Strategica")
+        raw_df = st.session_state['df']
 
-    selected_period = st.selectbox(
-        "Seleziona Periodo di Analisi",
-        options=['Anno Intero', 'Q1', 'Q2', 'Q3', 'Q4']
+        selected_period = st.selectbox(
+            "Seleziona Periodo di Analisi",
+            options=['Anno Intero', 'Q1', 'Q2', 'Q3', 'Q4']
     )
 
     # --- LOGICA DI CALCOLO DINAMICO ---
