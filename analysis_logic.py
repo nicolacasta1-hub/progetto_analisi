@@ -1,155 +1,156 @@
+# analysis_logic.py
+
 import pandas as pd
-import numpy as np
+from typing import List, Dict, Tuple
 
-def arricchisci_dati_base(df, quarter_columns):
+def arricchisci_dati_base(df_input: pd.DataFrame, quarter_columns: List[str]) -> pd.DataFrame:
     """
-    Arricchisce il DataFrame con metriche calcolate per il periodo specificato.
+    Takes a DataFrame and a list of quarter column names, then returns an 
+    enriched DataFrame with calculated metrics.
 
     Args:
-        df (pd.DataFrame): Il DataFrame grezzo caricato dall'Excel.
-        quarter_columns (list): Una lista di stringhe con i nomi delle colonne delle quantità
-                                 da sommare per il periodo di analisi (es. ['Vendite_Q1']).
+        df_input (pd.DataFrame): The raw DataFrame from the uploaded file.
+        quarter_columns (List[str]): A list of the quarter columns to sum for calculations 
+                                     (e.g., ['Vendite_Q1'] or ['Vendite_Q1', 'Vendite_Q2', ...]).
 
     Returns:
-        pd.DataFrame: Un nuovo DataFrame arricchito con le colonne calcolate.
+        pd.DataFrame: The DataFrame enriched with new calculated columns.
     """
-    df_enriched = df.copy()
-    df_enriched['Quantita Vendute'] = df_enriched[quarter_columns].sum(axis=1)
-    df_enriched['Ricavo Totale'] = df_enriched['Prezzo Vendita'] * df_enriched['Quantita Vendute']
-    df_enriched['Margine Unitario'] = df_enriched['Prezzo Vendita'] - df_enriched['Costo Primo']
-    df_enriched['Margine Totale'] = df_enriched['Margine Unitario'] * df_enriched['Quantita Vendute']
-    df_enriched['Marginalità Media (%)'] = np.where(
-        df_enriched['Prezzo Vendita'] > 0, 
-        (df_enriched['Margine Unitario'] / df_enriched['Prezzo Vendita']) * 100, 0
-    )
-    return df_enriched
-
-def calcola_kpi_globali(df):
-    """
-    Calcola i KPI aggregati per il DataFrame fornito.
-
-    Args:
-        df (pd.DataFrame): Un DataFrame arricchito dalla funzione arricchisci_dati_base.
-
-    Returns:
-        dict: Un dizionario contenente i 4 KPI principali.
-    """
-    total_revenue = df['Ricavo Totale'].sum()
-    total_margin = df['Margine Totale'].sum()
-    total_units = df['Quantita Vendute'].sum()
-    average_gross_profit = (total_margin / total_revenue * 100) if total_revenue > 0 else 0
+    df = df_input.copy()
     
-    return {
-        "Ricavi Totali": total_revenue,
-        "Margine Totale": total_margin,
-        "Unità Vendute": total_units,
-        "Profitto Lordo %": average_gross_profit
-    }
+    # Define column names based on the provided data structure
+    nome_piatto_col = "Nome Piatto"
+    categoria_col = "Categoria"
+    costo_primo_col = "Costo Primo"
+    prezzo_vendita_col = "Prezzo Vendita"
 
-def prepara_dati_trimestrali_per_grafico_annuale(df):
-    """
-    Prepara i dati per il grafico di andamento annuale.
+    # Calculate total quantity sold for the selected period
+    df['Quantita Vendute'] = df[quarter_columns].sum(axis=1)
 
-    Args:
-        df (pd.DataFrame): Il DataFrame grezzo originale.
-
-    Returns:
-        pd.DataFrame: Un DataFrame aggregato per trimestre.
-    """
-    trimestri = ['Q1', 'Q2', 'Q3', 'Q4']
-    dati_trend = []
-    for q in trimestri:
-        quantita_col = f'Vendite_{q}'
-        ricavi_q = (df['Prezzo Vendita'] * df[quantita_col]).sum()
-        margine_q = ((df['Prezzo Vendita'] - df['Costo Primo']) * df[quantita_col]).sum()
-        profittabilita_q = (margine_q / ricavi_q * 100) if ricavi_q > 0 else 0
-        dati_trend.append({
-            'Trimestre': q, 'Ricavi': ricavi_q, 'Margine': margine_q,
-            'Profittabilità (%)': profittabilita_q
-        })
-    return pd.DataFrame(dati_trend)
-
-def prepara_dati_categorie(df):
-    """
-    Aggrega i dati per categoria per i grafici a torta.
-
-    Args:
-        df (pd.DataFrame): Un DataFrame arricchito.
-
-    Returns:
-        tuple: Due DataFrame, uno per i ricavi e uno per il margine per categoria.
-    """
-    df_cat = df.groupby('Categoria').agg(
-        Ricavi=('Ricavo Totale', 'sum'),
-        Margine=('Margine Totale', 'sum')
-    ).reset_index()
-    df_ricavi_cat = df_cat[['Categoria', 'Ricavi']].copy()
-    df_margine_cat = df_cat[['Categoria', 'Margine']].copy()
-    return df_ricavi_cat, df_margine_cat
-
-def prepara_dati_top_flop(df):
-    """
-    Identifica i 10 migliori e i 10 peggiori prodotti per margine totale.
-
-    Args:
-        df (pd.DataFrame): Un DataFrame arricchito.
-
-    Returns:
-        tuple: Due DataFrame, uno per i Top 10 e uno per i Flop 10.
-    """
-    df_sorted = df.sort_values('Margine Totale', ascending=False)
-    df_top_10 = df_sorted.head(10)
-    df_flop_10 = df_sorted.tail(10).sort_values('Margine Totale', ascending=True)
-    return df_top_10, df_flop_10
-
-def genera_insight_kpi(kpi_attuali, kpi_precedenti):
-    """
-    Genera insight strategici basati sul trend dei KPI.
-
-    Args:
-        kpi_attuali (dict): Il dizionario dei KPI per il periodo corrente.
-        kpi_precedenti (dict): Il dizionario dei KPI per il periodo precedente, o None.
-
-    Returns:
-        str: Una stringa formattata con un commento strategico.
-    """
-    if kpi_precedenti is None:
-        return ""
+    # Calculate core financial metrics
+    df['Ricavo Totale'] = df[prezzo_vendita_col] * df['Quantita Vendute']
+    df['Margine Unitario'] = df[prezzo_vendita_col] - df[costo_primo_col]
+    df['Margine Totale'] = df['Margine Unitario'] * df['Quantita Vendute']
     
-    margine_attuale = kpi_attuali["Margine Totale"]
-    margine_precedente = kpi_precedenti["Margine Totale"]
+    # Calculate average margin percentage, handling division by zero
+    df['Marginalità Media (%)'] = 0.0
+    df.loc[df[prezzo_vendita_col] > 0, 'Marginalità Media (%)'] = \
+        (df['Margine Unitario'] / df[prezzo_vendita_col]) * 100
     
-    if margine_precedente > 0:
-        variazione_margine = ((margine_attuale - margine_precedente) / margine_precedente) * 100
-        if variazione_margine < -5:
-            return (f"⚠️ **Attenzione**: Il Margine Totale è calato del **{abs(variazione_margine):.1f}%** "
-                    "rispetto al trimestre precedente. Questo potrebbe indicare un aumento dei costi o "
-                    "un calo delle vendite sui prodotti più profittevoli.")
-        elif variazione_margine > 5:
-            return (f"📈 **Trend Positivo**: Il Margine Totale è cresciuto del **{variazione_margine:.1f}%**, "
-                    "indicando un miglioramento dell'efficienza o un aumento delle vendite di prodotti ad alto margine.")
-    return ""
+    return df
 
-def genera_insight_strutturali(df):
+def calcola_kpi_globali(df_arricchito: pd.DataFrame) -> Dict[str, float]:
     """
-    Genera insight basati sulla struttura del portafoglio annuale.
+    Calculates the global KPIs for the dashboard.
 
     Args:
-        df (pd.DataFrame): Un DataFrame arricchito che copre l'intero anno.
+        df_arricchito (pd.DataFrame): The enriched DataFrame.
 
     Returns:
-        list: Una lista di stringhe, ognuna contenente un insight strategico.
+        Dict[str, float]: A dictionary containing the four main KPIs.
     """
-    insights = []
-    margine_totale = df['Margine Totale'].sum()
-    if margine_totale > 0:
-        top_20_percent_count = int(len(df) * 0.2)
-        margine_top_20 = df.sort_values('Margine Totale', ascending=False).head(top_20_percent_count)['Margine Totale'].sum()
+    ricavi_totali = df_arricchito['Ricavo Totale'].sum()
+    margine_totale = df_arricchito['Margine Totale'].sum()
+    quantita_totale = df_arricchito['Quantita Vendute'].sum()
+    
+    if ricavi_totali > 0:
+        profitto_lordo_percentuale = (margine_totale / ricavi_totali) * 100
+    else:
+        profitto_lordo_percentuale = 0.0
         
-        if (margine_top_20 / margine_totale) > 0.8:
-            insights.append(
-                f"🎯 **Principio di Pareto Confermato**: L'analisi evidenzia che il **20%** dei prodotti "
-                f"genera oltre l'**{(margine_top_20/margine_totale)*100:.0f}%** del margine totale. "
-                "Questo nucleo di prodotti 'campioni' è l'asset strategico principale."
-            )
-    return insights
+    kpi_dict = {
+        "Ricavi Totali": ricavi_totali,
+        "Margine di Contribuzione Totale": margine_totale,
+        "Profitto Lordo Medio (%)": profitto_lordo_percentuale,
+        "Unità Vendute": quantita_totale
+    }
+    
+    return kpi_dict
+
+def prepara_dati_trimestrali_annuali(df_originale: pd.DataFrame) -> pd.DataFrame:
+    """
+    Prepares data for the annual trend chart using the pre-aggregated columns.
+
+    Args:
+        df_originale (pd.DataFrame): The original, unprocessed DataFrame.
+
+    Returns:
+        pd.DataFrame: A DataFrame aggregated by quarter.
+    """
+    df = df_originale.copy()
+    df['Margine Unitario'] = df['Prezzo Vendita'] - df['Costo Primo']
+    
+    ricavi_q1 = (df['Prezzo Vendita'] * df['Vendite_Q1']).sum()
+    ricavi_q2 = (df['Prezzo Vendita'] * df['Vendite_Q2']).sum()
+    ricavi_q3 = (df['Prezzo Vendita'] * df['Vendite_Q3']).sum()
+    ricavi_q4 = (df['Prezzo Vendita'] * df['Vendite_Q4']).sum()
+
+    margine_q1 = (df['Margine Unitario'] * df['Vendite_Q1']).sum()
+    margine_q2 = (df['Margine Unitario'] * df['Vendite_Q2']).sum()
+    margine_q3 = (df['Margine Unitario'] * df['Vendite_Q3']).sum()
+    margine_q4 = (df['Margine Unitario'] * df['Vendite_Q4']).sum()
+
+    dati = {
+        'Trimestre': ['Q1', 'Q2', 'Q3', 'Q4'],
+        'Ricavi': [ricavi_q1, ricavi_q2, ricavi_q3, ricavi_q4],
+        'Margine': [margine_q1, margine_q2, margine_q3, margine_q4]
+    }
+    df_trimestri = pd.DataFrame(dati)
+    
+    df_trimestri.loc[df_trimestri['Ricavi'] > 0, 'Profittabilità (%)'] = \
+        (df_trimestri['Margine'] / df_trimestri['Ricavi']) * 100
+    df_trimestri['Profittabilità (%)'] = df_trimestri['Profittabilità (%)'].fillna(0)
+    
+    return df_trimestri
+
+def prepara_dati_categorie(df_arricchito: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Prepares data for category analysis charts.
+
+    Args:
+        df_arricchito (pd.DataFrame): The enriched DataFrame.
+
+    Returns:
+        Tuple[pd.DataFrame, pd.DataFrame]: A tuple of two DataFrames for revenue 
+                                           contribution and margin contribution.
+    """
+    incidenza_ricavi = df_arricchito.groupby('Categoria')['Ricavo Totale'].sum().reset_index()
+    incidenza_margine = df_arricchito.groupby('Categoria')['Margine Totale'].sum().reset_index()
+    return incidenza_ricavi, incidenza_margine
+
+def prepara_dati_top_flop(df_arricchito: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Prepares data for Top 10 and Flop 10 product charts by margin.
+
+    Args:
+        df_arricchito (pd.DataFrame): The enriched DataFrame.
+
+    Returns:
+        Tuple[pd.DataFrame, pd.DataFrame]: A tuple of two DataFrames for Top 10 and Flop 10 products.
+    """
+    df_ordinato = df_arricchito.sort_values(by='Margine Totale', ascending=False)
+    top_10 = df_ordinato.head(10)
+    flop_10 = df_ordinato.tail(10).sort_values(by='Margine Totale', ascending=True)
+    return top_10, flop_10
+
+def prepara_dati_trend_prodotto(df_originale: pd.DataFrame, nome_prodotto: str) -> pd.DataFrame:
+    """
+    Prepares data for a single product's quarterly sales trend.
+
+    Args:
+        df_originale (pd.DataFrame): The original, unprocessed DataFrame.
+        nome_prodotto (str): The name of the product to analyze.
+
+    Returns:
+        pd.DataFrame: A DataFrame with quarterly sales for the selected product.
+    """
+    dati_prodotto = df_originale[df_originale['Nome Piatto'] == nome_prodotto]
+    if dati_prodotto.empty:
+        return pd.DataFrame({'Trimestre': [], 'Quantita Vendute': []})
+        
+    vendite = dati_prodotto[['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4']].iloc[0]
+    df_trend = pd.DataFrame({
+        'Trimestre': ['Q1', 'Q2', 'Q3', 'Q4'],
+        'Quantita Vendute': vendite.values
+    })
+    return df_trend
