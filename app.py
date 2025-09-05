@@ -63,7 +63,6 @@ if selected == "Caricamento Dati":
 
 # --- PAGINA: DASHBOARD GLOBALE ---
 if selected == "Dashboard Globale":
-    st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
     if st.session_state['df'] is None:
         st.warning("Nessun dato caricato. Per favore, vai alla pagina 'Caricamento Dati' e carica un file Excel.")
         st.stop()
@@ -75,6 +74,7 @@ if selected == "Dashboard Globale":
         "Seleziona Periodo di Analisi",
         options=['Anno Intero', 'Q1', 'Q2', 'Q3', 'Q4']
     )
+    st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
 
     # --- LOGICA DI CALCOLO DINAMICO ---
     kpi_precedenti = None

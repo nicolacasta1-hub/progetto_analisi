@@ -3,11 +3,10 @@
     background-color: #0E1117;
 }
 .dashboard-container {
-    background-color: #FFFFFF;
-    color: #111111;
+    background-color: #F0F2F6; /* Un grigio molto chiaro per distinguerlo dallo sfondo bianco */
     border-radius: 15px;
     padding: 2rem;
-    border: 1px solid #DDDDDD;
+    border: 1px solid #E0E0E0;
 }
 /* Crea il pannello di contenuto principale chiaro con angoli arrotondati */
 /* Selettore robusto per il contenitore principale del contenuto */
