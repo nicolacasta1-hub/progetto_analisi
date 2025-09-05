@@ -5,7 +5,7 @@
 .dashboard-container {
     background-color: #F0F2F6; /* Un grigio molto chiaro per distinguerlo dallo sfondo bianco */
     border-radius: 15px;
-    padding: 2rem;
+    padding: 8rem;
     border: 1px solid #E0E0E0;
 }
 /* Crea il pannello di contenuto principale chiaro con angoli arrotondati */
@@ -14,7 +14,7 @@ div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] div[data-t
     background-color: #4A4A4A;
     color: #111111;
     border-radius: 15px;
-    padding: 20rem;
+    padding: 2rem;
 }
 
 /* Stile per i componenti Metric (KPI Cards) */
