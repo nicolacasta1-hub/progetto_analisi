@@ -2,52 +2,56 @@
 [data-testid="stAppViewContainer"] {
     background-color: #0E1117;
 }
-.dashboard-container {
-    background-color: #F0F2F6; /* Un grigio molto chiaro per distinguerlo dallo sfondo bianco */
-    border-radius: 15px;
-    padding: 8rem;
-    border: 1px solid #E0E0E0;
-}
-/* Crea il pannello di contenuto principale chiaro con angoli arrotondati */
-/* Selettore robusto per il contenitore principale del contenuto */
-div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] {
-    background-color: #4A4A4A;
-    color: #111111;
+
+/* REGOLA CHIAVE:
+   Questa nuova regola trasforma l'area di contenuto principale in un pannello bianco.
+*/
+.main .block-container {
+    background-color: #FFFFFF;
+    color: #111111; /* Testo scuro per leggibilità su sfondo bianco */
     border-radius: 15px;
     padding: 2rem;
+    margin: 1rem;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
 }
 
-/* Stile per i componenti Metric (KPI Cards) */
+/* Stile per i componenti Metric (KPI Cards) su sfondo bianco */
 [data-testid="stMetric"] {
-    background-color: #252526;
+    background-color: #FFFFFF; /* Sfondo bianco per integrarsi nel pannello */
     border-radius: 10px;
     padding: 20px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #E0E0E0; /* Aggiungiamo un bordo sottile per definirli */
     transition: all 0.3s ease-in-out;
-    border: 1px solid transparent;
 }
 
 /* Effetto Hover per le KPI Cards */
 [data-testid="stMetric"]:hover {
     transform: scale(1.03);
-    background-color: #007BFF;
+    background-color: #F0F2F6; /* Sfondo grigio chiaro al passaggio del mouse */
     border: 1px solid #007BFF;
 }
 
-/* Stile per il menu nella sidebar */
-.nav-link {
-    font-size: 9px !important;
-    transition: all 0.3s ease !important;
+/* Regole per la Sidebar Bianca (invariate) */
+[data-testid="stSidebar"] {
+    background-color: #FFFFFF;
 }
 
-/* Stile per l'opzione attiva nel menu */
+[data-testid="stSidebar"] .st-emotion-cache-10oheav { 
+    color: #111111;
+}
+
+.nav-link {
+    font-size: 14px !important;
+    transition: all 0.3s ease !important;
+    color: #111111 !important;
+}
+
 .nav-link-selected {
-    background-color: 007BFF !important;
-    color: #000000 !important;
+    background-color: #262730 !important;
+    color: #FFFFFF !important;
     font-weight: bold;
 }
 
-/* Effetto Hover per le opzioni del menu */
 .nav-link:not(.nav-link-selected):hover {
-    background-color: #283044 !important;
+    background-color: #F0F2F6 !important;
 }
