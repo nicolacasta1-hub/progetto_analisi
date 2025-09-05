@@ -123,9 +123,7 @@ if selected == "Dashboard Globale":
     
     # --- SEZIONE INSIGHTS AUTOMATICI ---
 st.subheader("Insight Strategici Automatici")
-
 # Insight basati sul trend (Livello 1)
-# Questa chiamata ora funziona perché l'importazione è corretta
 insight_trend_list = analizza_kpi_trends(kpi_attuali, kpi_precedenti)
 for insight in insight_trend_list:
     st.warning(insight)
