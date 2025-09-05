@@ -4,10 +4,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 from streamlit_option_menu import option_menu
 from analysis_logic import (
-    arricchisci_dati_base, calcola_kpi_globali,
+    arricchisci_dati_base,
+    calcola_kpi_globali,
     prepara_dati_trimestrali_per_grafico_annuale,
-    prepara_dati_categorie, prepara_dati_top_flop,
-    genera_insight_kpi, genera_insight_strutturali
+    prepara_dati_categorie,
+    prepara_dati_top_flop,
+    analizza_kpi_trends,
+    analizza_struttura_business
 )
 
 # --- CONFIGURAZIONE PAGINA E CSS ---
@@ -114,14 +117,23 @@ if selected == "Dashboard Globale":
             st.metric(label=kpi_names[i], value=val_formattato, delta=delta)
     
     # --- SEZIONE INSIGHTS AUTOMATICI ---
-    insight_kpi_text = genera_insight_kpi(kpi_attuali, kpi_precedenti)
-    if insight_kpi_text:
-        st.warning(insight_kpi_text)
-    
-    df_annuale = arricchisci_dati_base(raw_df, ['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4'])
-    insights_strutturali_list = genera_insight_strutturali(df_annuale)
-    for insight in insights_strutturali_list:
-        st.info(insight)
+st.subheader("Insight Strategici")
+
+# Insight basati sul trend (Livello 1)
+insight_trend = analizza_kpi_trends(kpi_attuali, kpi_precedenti)
+if insight_trend:
+    # Usiamo st.warning per evidenziare i trend che richiedono attenzione
+    st.warning(insight_trend[0])
+
+# Insight basati sulla struttura del business (Livello 2 e 3)
+# Calcoliamo i dati annuali arricchiti solo se necessario
+df_annuale_arricchito = arricchisci_dati_base(raw_df, ['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4'])
+insights_strutturali = analizza_struttura_business(df_annuale_arricchito)
+
+if insights_strutturali:
+    with st.container(border=True):
+        for insight in insights_strutturali:
+            st.info(insight) # Usiamo st.info per gli insight strutturali
     
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -133,12 +145,10 @@ if selected == "Dashboard Globale":
         fig_trend.add_trace(go.Bar(x=df_trend['Trimestre'], y=df_trend['Ricavi'], name='Ricavi (€)', marker_color='#007BFF'))
         fig_trend.add_trace(go.Scatter(x=df_trend['Trimestre'], y=df_trend['Profittabilità (%)'], name='Profittabilità (%)', mode='lines+markers', yaxis="y2"))
         fig_trend.update_layout(
-    paper_bgcolor='white', plot_bgcolor='white',
-    font=dict(color='black'), # Imposta il colore del testo a nero
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-    yaxis=dict(showgrid=True, gridcolor='#dddddd'), # Aggiunge una griglia chiara per leggibilità
-    yaxis2=dict(title="Profittabilità (%)", overlaying="y", side="right", showgrid=False)
-)
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            yaxis=dict(showgrid=False), yaxis2=dict(title="Profittabilità (%)", overlaying="y", side="right", showgrid=False)
+        )
         st.plotly_chart(fig_trend, use_container_width=True)
 
     # --- ALTRI GRAFICI ---
@@ -147,12 +157,12 @@ if selected == "Dashboard Globale":
     with col1:
         df_ricavi_cat, _ = prepara_dati_categorie(df_periodo)
         fig_ric_cat = px.pie(df_ricavi_cat, names='Categoria', values='Ricavi', title='Incidenza Ricavi per Categoria', hole=0.4)
-        fig_ric_cat.update_layout(paper_bgcolor='white', font=dict(color='black'), showlegend=True)
+        fig_ric_cat.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
         st.plotly_chart(fig_ric_cat, use_container_width=True)
     with col2:
         _, df_margine_cat = prepara_dati_categorie(df_periodo)
         fig_mar_cat = px.pie(df_margine_cat, names='Categoria', values='Margine', title='Incidenza Margine per Categoria', hole=0.4)
-        fig_mar_cat.update_layout(paper_bgcolor='white', font=dict(color='black'), showlegend=True)
+        fig_mar_cat.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
         st.plotly_chart(fig_mar_cat, use_container_width=True)
 
     st.subheader(f"Analisi di Portafoglio Prodotto ({selected_period})")
@@ -165,7 +175,7 @@ if selected == "Dashboard Globale":
     with col4:
         _, df_flop = prepara_dati_top_flop(df_periodo)
         fig_flop = px.bar(df_flop, x='Margine Totale', y='Nome Piatto', orientation='h', title='Flop 10 Prodotti per Margine Totale')
-        fig_flop.update_layout(paper_bgcolor='white', plot_bgcolor='white', font=dict(color='black'), yaxis={'categoryorder':'total descending'}, xaxis={'showgrid': True, 'gridcolor': '#dddddd'})
+        fig_flop.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total descending', 'showgrid': False}, xaxis={'showgrid': False})
         st.plotly_chart(fig_flop, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
