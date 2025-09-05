@@ -39,13 +39,16 @@ def prepara_dati_trimestrali_per_grafico_annuale(df):
         })
     return pd.DataFrame(dati_trend)
 
-def prepara_dati_categorie(df):
-    df_cat = df.groupby('Categoria').agg(
+# All'interno del file analysis_logic.py, sostituite la vecchia funzione con questa:
+
+def prepara_dati_categorie(df_arricchito):
+    df_cat = df_arricchito.groupby('Categoria').agg(
         Ricavi=('Ricavo Totale', 'sum'),
         Margine=('Margine Totale', 'sum')
     ).reset_index()
     df_ricavi_cat = df_cat[['Categoria', 'Ricavi']].copy()
     df_margine_cat = df_cat[['Categoria', 'Margine']].copy()
+
     return df_ricavi_cat, df_margine_cat
 
 def prepara_dati_top_flop(df):

@@ -5,7 +5,7 @@
 
 /* Crea il pannello di contenuto principale chiaro con angoli arrotondati */
 div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] {
-    background-color: #f3f4f7ff;
+    background-color: #a5a5a5ff;
     color: #111111;
     border-radius: 15px;
     padding: 2rem;
@@ -13,7 +13,7 @@ div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] div[data-t
 
 /* MODIFICA: Regole per la Sidebar Bianca */
 [data-testid="stSidebar"] {
-    background-color: #f3f4f7ff;
+    background-color: #a5a5a5ff;
 }
 
 /* Testo generale della sidebar */
