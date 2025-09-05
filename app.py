@@ -122,23 +122,24 @@ if selected == "Dashboard Globale":
             st.metric(label=kpi_names[i], value=val_formattato, delta=delta)
     
     # --- SEZIONE INSIGHTS AUTOMATICI ---
-st.subheader("Insight Strategici")
+st.subheader("Insight Strategici Automatici")
 
 # Insight basati sul trend (Livello 1)
-insight_trend = analizza_kpi_trends(kpi_attuali, kpi_precedenti)
-if insight_trend:
-    # Usiamo st.warning per evidenziare i trend che richiedono attenzione
-    st.warning(insight_trend[0])
+# Questa chiamata ora funziona perché l'importazione è corretta
+insight_trend_list = analizza_kpi_trends(kpi_attuali, kpi_precedenti)
+for insight in insight_trend_list:
+    st.warning(insight)
 
 # Insight basati sulla struttura del business (Livello 2 e 3)
-# Calcoliamo i dati annuali arricchiti solo se necessario
-df_annuale_arricchito = arricchisci_dati_base(raw_df, ['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4'])
-insights_strutturali = analizza_struttura_business(df_annuale_arricchito)
+# Creiamo il dataframe annuale arricchito per l'analisi strutturale
+df_annuale = arricchisci_dati_base(raw_df, ['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4'])
+insights_strutturali_list = analizza_struttura_business(df_annuale)
 
-if insights_strutturali:
+if insights_strutturali_list:
     with st.container(border=True):
-        for insight in insights_strutturali:
-            st.info(insight) # Usiamo st.info per gli insight strutturali
+        for insight in insights_strutturali_list:
+            # Usiamo st.markdown per una formattazione più ricca
+            st.info(insight)
     
     st.markdown("<hr>", unsafe_allow_html=True)
 
