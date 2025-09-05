@@ -145,12 +145,12 @@ if selected == "Dashboard Globale":
     with col1:
         df_ricavi_cat, _ = prepara_dati_categorie(df_periodo)
         fig_ric_cat = px.pie(df_ricavi_cat, names='Categoria', values='Ricavi', title='Incidenza Ricavi per Categoria', hole=0.4)
-        fig_ric_cat.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
+        fig_ric_cat.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
         st.plotly_chart(fig_ric_cat, use_container_width=True)
     with col2:
         _, df_margine_cat = prepara_dati_categorie(df_periodo)
         fig_mar_cat = px.pie(df_margine_cat, names='Categoria', values='Margine', title='Incidenza Margine per Categoria', hole=0.4)
-        fig_mar_cat.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
+        fig_mar_cat.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
         st.plotly_chart(fig_mar_cat, use_container_width=True)
 
     st.subheader(f"Analisi di Portafoglio Prodotto ({selected_period})")
@@ -158,12 +158,12 @@ if selected == "Dashboard Globale":
     with col3:
         df_top, _ = prepara_dati_top_flop(df_periodo)
         fig_top = px.bar(df_top, x='Margine Totale', y='Nome Piatto', orientation='h', title='Top 10 Prodotti per Margine Totale')
-        fig_top.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending', 'showgrid': False}, xaxis={'showgrid': False})
+        fig_top.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending', 'showgrid': False}, xaxis={'showgrid': False})
         st.plotly_chart(fig_top, use_container_width=True)
     with col4:
         _, df_flop = prepara_dati_top_flop(df_periodo)
         fig_flop = px.bar(df_flop, x='Margine Totale', y='Nome Piatto', orientation='h', title='Flop 10 Prodotti per Margine Totale')
-        fig_flop.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total descending', 'showgrid': False}, xaxis={'showgrid': False})
+        fig_flop.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total descending', 'showgrid': False}, xaxis={'showgrid': False})
         st.plotly_chart(fig_flop, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 

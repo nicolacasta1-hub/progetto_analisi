@@ -2,56 +2,46 @@
 [data-testid="stAppViewContainer"] {
     background-color: #0E1117;
 }
-
-/* REGOLA CHIAVE:
-   Questa nuova regola trasforma l'area di contenuto principale in un pannello bianco.
-*/
-.main .block-container {
-    background-color: #FFFFFF;
-    color: #111111; /* Testo scuro per leggibilità su sfondo bianco */
+/* Crea il pannello di contenuto principale chiaro con angoli arrotondati */
+/* Selettore robusto per il contenitore principale del contenuto */
+div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] {
+    background-color: #4A4A4A;
+    color: #111111;
     border-radius: 15px;
     padding: 2rem;
-    margin: 1rem;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
 }
 
-/* Stile per i componenti Metric (KPI Cards) su sfondo bianco */
+/* Stile per i componenti Metric (KPI Cards) */
 [data-testid="stMetric"] {
-    background-color: #FFFFFF; /* Sfondo bianco per integrarsi nel pannello */
+    background-color: #252526;
     border-radius: 10px;
     padding: 20px;
-    border: 1px solid #E0E0E0; /* Aggiungiamo un bordo sottile per definirli */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease-in-out;
+    border: 1px solid transparent;
 }
 
 /* Effetto Hover per le KPI Cards */
 [data-testid="stMetric"]:hover {
     transform: scale(1.03);
-    background-color: #F0F2F6; /* Sfondo grigio chiaro al passaggio del mouse */
+    background-color: #007BFF;
     border: 1px solid #007BFF;
 }
 
-/* Regole per la Sidebar Bianca (invariate) */
-[data-testid="stSidebar"] {
-    background-color: #FFFFFF;
-}
-
-[data-testid="stSidebar"] .st-emotion-cache-10oheav { 
-    color: #111111;
-}
-
+/* Stile per il menu nella sidebar */
 .nav-link {
-    font-size: 14px !important;
+    font-size: 9px !important;
     transition: all 0.3s ease !important;
-    color: #111111 !important;
 }
 
+/* Stile per l'opzione attiva nel menu */
 .nav-link-selected {
-    background-color: #262730 !important;
-    color: #FFFFFF !important;
+    background-color: 007BFF !important;
+    color: #000000 !important;
     font-weight: bold;
 }
 
+/* Effetto Hover per le opzioni del menu */
 .nav-link:not(.nav-link-selected):hover {
-    background-color: #F0F2F6 !important;
+    background-color: #283044 !important;
 }
