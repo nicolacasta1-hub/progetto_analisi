@@ -6,7 +6,7 @@
 /* Crea il pannello di contenuto principale chiaro con angoli arrotondati */
 /* Selettore robusto per il contenitore principale del contenuto */
 div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] {
-    background-color: #FFFFFF;
+    background-color: #4A4A4A;
     color: #111111;
     border-radius: 15px;
     padding: 2rem;
@@ -31,7 +31,7 @@ div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] div[data-t
 
 /* Stile per il menu nella sidebar */
 .nav-link {
-    font-size: 6px !important;
+    font-size: 9px !important;
     transition: all 0.3s ease !important;
 }
 
