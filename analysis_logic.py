@@ -9,9 +9,9 @@ def arricchisci_dati_base(df_input):
     df = df_input.copy()
     
     # Calcoliamo le nuove colonne
-    df['Ricavo Totale'] = df['Prezzo Vendita'] * df['Quantita Vendute']
-    df['Margine Unitario'] = df['Prezzo Vendita'] - df['Costo Primo']
-    df['Margine Totale'] = df['Margine Unitario'] * df['Quantita Vendute']
+    df['Ricavo Totale'] = df['PrezzoVendita'] * df['QuantitaVenduta']
+    df['Margine Unitario'] = df['PrezzoVendita'] - df['Costoingredienti']
+    df['Margine Totale'] = df['Margine Unitario'] * df['QuantitaVenduta']
     
     return df
 
@@ -22,7 +22,7 @@ def calcola_kpi_globali(df_arricchito):
     """
     ricavi_totali = df_arricchito['Ricavo Totale'].sum()
     margine_totale = df_arricchito['Margine Totale'].sum()
-    quantita_totale = df_arricchito['Quantita Vendute'].sum()
+    quantita_totale = df_arricchito['QuantitaVenduta'].sum()
     
     # Calcoliamo il profitto lordo medio, gestendo il caso di ricavi a zero
     if ricavi_totali > 0:
