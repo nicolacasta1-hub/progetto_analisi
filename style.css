@@ -1,35 +1,48 @@
-/* Stile per i contenitori delle KPI cards */
-.kpi-card {
-    background-color: #283044;
+/* Applica lo sfondo scuro all'intera applicazione */
+[data-testid="stAppViewContainer"] {
+    background-color: #0E1117;
+}
+
+/* Crea il pannello di contenuto principale chiaro con angoli arrotondati */
+/* Selettore robusto per il contenitore principale del contenuto */
+div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] {
+    background-color: #FFFFFF;
+    color: #111111;
+    border-radius: 15px;
+    padding: 2rem;
+}
+
+/* Stile per i componenti Metric (KPI Cards) */
+[data-testid="stMetric"] {
+    background-color: #F0F2F6;
     border-radius: 10px;
-    padding: 20px 15px;
-    text-align: center;
-    border: 1px solid #3498DB;
-    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
-    transition: background-color 0.3s ease;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease-in-out;
+    border: 1px solid transparent;
 }
 
-.kpi-card:hover {
-    background-color: #3498DB;
+/* Effetto Hover per le KPI Cards */
+[data-testid="stMetric"]:hover {
+    transform: scale(1.03);
+    background-color: #D6EAF8;
+    border: 1px solid #007BFF;
 }
 
-/* Stile per il titolo della KPI (in Streamlit è un <label>) */
-.kpi-card label {
-    color: #FAFAFA;
-    margin-bottom: 10px;
-    font-size: 1em;
+/* Stile per il menu nella sidebar */
+.nav-link {
+    font-size: 14px !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Stile per l'opzione attiva nel menu */
+.nav-link-selected {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
     font-weight: bold;
 }
 
-/* Stile per il valore numerico della KPI (in Streamlit è un <div>) */
-.kpi-card div[data-testid="stMetricValue"] {
-    color: #FAFAFA;
-    font-size: 2.2em;
-    font-weight: bold;
-}
-
-/* Stile per il delta (trend) della KPI */
-.kpi-card div[data-testid="stMetricDelta"] {
-    font-size: 1.2em !important;
-    font-weight: bold !important;
+/* Effetto Hover per le opzioni del menu */
+.nav-link:not(.nav-link-selected):hover {
+    background-color: #283044 !important;
 }
