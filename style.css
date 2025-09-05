@@ -2,23 +2,34 @@
 .kpi-card {
     background-color: #283044;
     border-radius: 10px;
-    padding: 20px;
+    padding: 20px 15px;
     text-align: center;
-    border: 1px solid #7792E3;
+    border: 1px solid #3498DB;
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    transition: background-color 0.3s ease;
 }
 
-/* Stile per il titolo della KPI */
-.kpi-card h4 {
+.kpi-card:hover {
+    background-color: #3498DB;
+}
+
+/* Stile per il titolo della KPI (in Streamlit è un <label>) */
+.kpi-card label {
     color: #FAFAFA;
     margin-bottom: 10px;
-    font-size: 1.2em;
+    font-size: 1em;
+    font-weight: bold;
 }
 
-/* Stile per il valore numerico della KPI */
-.kpi-card p {
+/* Stile per il valore numerico della KPI (in Streamlit è un <div>) */
+.kpi-card div[data-testid="stMetricValue"] {
     color: #FAFAFA;
-    font-size: 2.5em;
+    font-size: 2.2em;
     font-weight: bold;
-    margin: 0;
+}
+
+/* Stile per il delta (trend) della KPI */
+.kpi-card div[data-testid="stMetricDelta"] {
+    font-size: 1.2em !important;
+    font-weight: bold !important;
 }
