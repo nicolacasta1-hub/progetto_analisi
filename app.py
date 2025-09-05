@@ -3,12 +3,17 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from streamlit_option_menu import option_menu
+# Importazioni dal file di logica di analisi
 from analysis_logic import (
     arricchisci_dati_base,
     calcola_kpi_globali,
     prepara_dati_trimestrali_per_grafico_annuale,
     prepara_dati_categorie,
-    prepara_dati_top_flop,
+    prepara_dati_top_flop
+)
+
+# Importazioni dal nuovo file di logica degli insight
+from insights_logic import (
     analizza_kpi_trends,
     analizza_struttura_business
 )
