@@ -1,10 +1,24 @@
-/* style.css */
-
-/* Questo codice prende di mira i box dei KPI di Streamlit */
-[data-testid="stMetric"] {
-    background-color: #393939;
-    border: 1px solid #393939;
-    padding: 15px;
+/* Stile per i contenitori delle KPI cards */
+.kpi-card {
+    background-color: #283044;
     border-radius: 10px;
-    color: white;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #7792E3;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+}
+
+/* Stile per il titolo della KPI */
+.kpi-card h4 {
+    color: #FAFAFA;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+/* Stile per il valore numerico della KPI */
+.kpi-card p {
+    color: #FAFAFA;
+    font-size: 2.5em;
+    font-weight: bold;
+    margin: 0;
 }

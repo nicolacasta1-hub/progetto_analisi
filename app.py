@@ -1,131 +1,161 @@
-# app.py
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from streamlit_option_menu import option_menu
-
-# Importiamo le nostre funzioni dal "cervello"
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from analysis_logic import (
-    arricchisci_dati_base, 
+    calcola_metriche_derivate,
     calcola_kpi_globali,
-    prepara_dati_trimestrali,
+    prepara_dati_trimestrali_per_grafico_annuale,
     prepara_dati_categorie,
     prepara_dati_top_flop
 )
 
-# --- IMPOSTAZIONI PAGINA E STILE ---
-st.set_page_config(layout="wide", page_title="Decision Intelligence Dashboard")
+# --- CONFIGURAZIONE PAGINA ---
+st.set_page_config(
+    page_title="Decision Intelligence Dashboard",
+    page_icon="💼",
+    layout="wide"
+)
 
-# Funzione per caricare il nostro file CSS personalizzato
+# --- CARICAMENTO CSS ---
 def local_css(file_name):
     with open(file_name) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-
-# Carichiamo lo stile (assicurati di avere style.css e .streamlit/config.toml)
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 local_css("style.css")
 
-# Definiamo la nostra palette di colori obiettivo
-COLOR_PALETTE = ["#007BFF", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF"]
-
-# --- FUNZIONE DI CARICAMENTO DATI ---
-@st.cache_data
-def carica_dati(file_caricato):
-    df = pd.read_excel(file_caricato)
-    return df
-
-# --- SIDEBAR DI NAVIGAZIONE ---
+# --- SIDEBAR ---
 with st.sidebar:
-    #st.image("logo_placeholder.png", width=100) # Assicurati di avere un'immagine logo
-    selected = option_menu(
-        menu_title="Menu Principale",
-        options=["Dashboard Globale", "Analisi Categorie", "Analisi Prodotti", "Analisi Comparativa", "Laboratorio Interattivo", "Assistente AI"],
-        icons=["house", "pie-chart", "box-seam", "intersect", "magic", "robot"],
-        menu_icon="cast",
-        default_index=0,
+    st.title("💼 Dashboard di Analisi")
+    st.info(
+        "Questo strumento è progettato per trasformare i dati di vendita in "
+        "insight strategici e supportare le decisioni aziendali."
     )
-    # L'assistente AI sarà in un expander per essere nascondibile
-    with st.expander("🤖 Assistente AI"):
-        st.write("Qui ci sarà la nostra interfaccia di chat!")
-        # st.text_input(...) e logica IA
+    st.warning("Assicurarsi che il file Excel caricato contenga le colonne: 'Nome Piatto', 'Categoria', 'Costo Primo', 'Prezzo Vendita', e 'Vendite_Q1' a 'Vendite_Q4'.")
 
-# --- CORPO PRINCIPALE DELL'APP ---
+# --- PAGINA PRINCIPALE ---
+st.title("Dashboard Globale di Analisi Decisionale")
 
-# Per ora, mostriamo solo il contenuto della Dashboard Globale
-if selected == "Dashboard Globale":
+uploaded_file = st.file_uploader("Carica qui il tuo file di analisi (formato .xlsx)", type=["xlsx"])
 
-    st.title("Global Dashboard 📈")
+if uploaded_file:
+    try:
+        raw_df = pd.read_excel(uploaded_file)
+    except Exception as e:
+        st.error(f"Errore nella lettura del file Excel: {e}")
+        st.stop()
 
-    uploaded_file = st.file_uploader(
-        "Scegli un file Excel con i dati di vendita (deve contenere la colonna 'Data Vendita')", 
-        type="xlsx"
+    # --- SELETTORE DEL PERIODO (FEATURE CHIAVE) ---
+    selected_period = st.selectbox(
+        "Seleziona Periodo di Analisi",
+        options=['Anno Intero', 'Q1', 'Q2', 'Q3', 'Q4'],
+        index=0 # 'Anno Intero' di default
     )
+
+    # --- LOGICA DI FILTRAGGIO DINAMICO DEI DATI ---
+    if selected_period == 'Anno Intero':
+        # Creiamo una colonna temporanea per le vendite annuali
+        raw_df['Quantita Totale'] = raw_df[['Vendite_Q1', 'Vendite_Q2', 'Vendite_Q3', 'Vendite_Q4']].sum(axis=1)
+        quantita_col_da_usare = 'Quantita Totale'
+    else: # Se è selezionato un trimestre
+        quantita_col_da_usare = f'Vendite_{selected_period}'
     
-    if uploaded_file is not None:
+    # Calcoliamo le metriche derivate per il periodo selezionato
+    df_periodo = calcola_metriche_derivate(raw_df, quantita_col_da_usare)
+
+    # --- SEZIONE KPI ---
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.subheader("Indicatori di Performance Chiave (KPIs)")
+    
+    kpis = calcola_kpi_globali(df_periodo)
+    
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    
+    with kpi1:
+        st.markdown(f'<div class="kpi-card"><h4>Ricavi Totali</h4><p>€ {kpis["Ricavi Totali"]:,.2f}</p></div>', unsafe_allow_html=True)
+    with kpi2:
+        st.markdown(f'<div class="kpi-card"><h4>Margine di Contribuzione Totale</h4><p>€ {kpis["Margine di Contribuzione Totale"]:,.2f}</p></div>', unsafe_allow_html=True)
+    with kpi3:
+        st.markdown(f'<div class="kpi-card"><h4>Piatti Venduti</h4><p>{int(kpis["Piatti Venduti"])}</p></div>', unsafe_allow_html=True)
+    with kpi4:
+        st.markdown(f'<div class="kpi-card"><h4>Profitto Lordo Medio %</h4><p>{kpis["Profitto Lordo Medio (%)"]:.2f}%</p></div>', unsafe_allow_html=True)
+
+    # --- GRAFICI ---
+    st.markdown("<hr>", unsafe_allow_html=True)
+    
+    # --- GRAFICO CONDIZIONALE: ANDAMENTO ANNUALE ---
+    if selected_period == 'Anno Intero':
+        st.subheader("Andamento Performance Annuale")
+        df_trend = prepara_dati_trimestrali_per_grafico_annuale(raw_df)
         
-        df_grezzo = carica_dati(uploaded_file)
-        df_analisi = arricchisci_dati_base(df_grezzo)
+        # Creazione del grafico combinato con Plotly
+        fig_trend = make_subplots(specs=[[{"secondary_y": True}]])
         
-        # --- FILTRO PERIODO ---
-        st.header("Filtra per Periodo")
-        lista_trimestri = ['Tutti'] + sorted(df_analisi['Trimestre'].unique().tolist())
-        periodo_selezionato = st.selectbox("Scegli un Trimestre da analizzare:", options=lista_trimestri)
-
-        # Filtriamo i dati in base alla selezione
-        if periodo_selezionato == 'Tutti':
-            df_filtrato = df_analisi
-        else:
-            df_filtrato = df_analisi[df_analisi['Trimestre'] == periodo_selezionato]
+        # Barra per Ricavi
+        fig_trend.add_trace(go.Bar(
+            x=df_trend['Trimestre'], 
+            y=df_trend['Ricavi'], 
+            name='Ricavi (€)',
+            marker_color='#7792E3'
+        ), secondary_y=False)
         
-        # --- KPI GLOBALI ---
-        kpi_globali = calcola_kpi_globali(df_filtrato)
+        # Linea per Profittabilità
+        fig_trend.add_trace(go.Scatter(
+            x=df_trend['Trimestre'], 
+            y=df_trend['Profittabilità (%)'], 
+            name='Profittabilità (%)', 
+            mode='lines+markers',
+            marker_color='#34A853'
+        ), secondary_y=True)
+
+        fig_trend.update_layout(
+            title_text='Ricavi vs. Profittabilità per Trimestre',
+            template='plotly_dark',
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
+        fig_trend.update_yaxes(title_text="Ricavi (€)", secondary_y=False)
+        fig_trend.update_yaxes(title_text="Profittabilità (%)", secondary_y=True)
         
-        st.divider()
-        col1, col2, col3, col4 = st.columns(4)
-        # (Codice KPI come prima, ma usando i dati filtrati)
-        with col1: st.metric(label="Ricavi Totali", value=f"€ {kpi_globali['Ricavi Totali']:.2f}")
-        with col2: st.metric(label="Margine Totale", value=f"€ {kpi_globali['Margine di Contribuzione Totale']:.2f}")
-        with col3: st.metric(label="Profitto Lordo Medio", value=f"{kpi_globali['Profitto Lordo Medio (%)']:.1f} %")
-        with col4: st.metric(label="Unità Vendute", value=f"{kpi_globali['Unità Vendute']}")
-        st.divider()
+        st.plotly_chart(fig_trend, use_container_width=True)
 
-        # --- GRAFICI ---
-        st.header("Visualizzazioni")
+    # --- ALTRI GRAFICI (SEMPRE VISIBILI) ---
+    st.subheader("Analisi dei Driver di Performance")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        df_ricavi_cat, df_margine_cat = prepara_dati_categorie(df_periodo)
         
-        col_graf_1, col_graf_2 = st.columns([2, 1]) # La prima colonna è più grande
+        fig_ric_cat = px.bar(df_ricavi_cat, x='Percentuale', y='Categoria', orientation='h', title='Ripartizione Ricavi per Categoria (%)')
+        fig_ric_cat.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending'})
+        st.plotly_chart(fig_ric_cat, use_container_width=True)
 
-        with col_graf_1:
-            # Grafico trimestrale (usa i dati non filtrati per mostrare sempre il trend annuale)
-            dati_chart_trimestri = prepara_dati_trimestrali(df_analisi)
-            fig_trimestri = px.bar(dati_chart_trimestri, x='Trimestre', y='Ricavi', 
-                                   title='Andamento Trimestrale Ricavi', color_discrete_sequence=COLOR_PALETTE)
-            fig_trimestri.add_scatter(x=dati_chart_trimestri['Trimestre'], y=dati_chart_trimestri['Profittabilità (%)'], 
-                                      mode='lines', name='Profittabilità (%)', yaxis='y2')
-            fig_trimestri.update_layout(yaxis2=dict(title='Profittabilità (%)', overlaying='y', side='right'))
-            st.plotly_chart(fig_trimestri, use_container_width=True)
+    with col2:
+        df_ricavi_cat, df_margine_cat = prepara_dati_categorie(df_periodo) # Ricalcolo per sicurezza
+        
+        fig_mar_cat = px.bar(df_margine_cat, x='Percentuale', y='Categoria', orientation='h', title='Ripartizione Margine per Categoria (%)')
+        fig_mar_cat.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending'})
+        st.plotly_chart(fig_mar_cat, use_container_width=True)
 
-        with col_graf_2:
-            incidenza_ricavi, marginalita_media = prepara_dati_categorie(df_filtrato)
-            # Grafico a torta per l'incidenza dei ricavi
-            fig_torta = px.pie(incidenza_ricavi, names='Categoria', values='Ricavo Totale', 
-                               title='Incidenza Ricavi per Categoria', hole=0.4, color_discrete_sequence=COLOR_PALETTE)
-            st.plotly_chart(fig_torta, use_container_width=True)
+    st.subheader("Analisi di Portafoglio Prodotto")
 
-        st.divider()
+    col3, col4 = st.columns(2)
+    
+    with col3:
+        df_top, df_flop = prepara_dati_top_flop(df_periodo)
+        
+        fig_top = px.bar(df_top, x='Margine Totale', y='Nome Piatto', orientation='h', title='Top 10 Prodotti per Margine Totale')
+        fig_top.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending'})
+        st.plotly_chart(fig_top, use_container_width=True)
 
-        # Grafici Top/Flop
-        col_top, col_flop = st.columns(2)
-        top_10, flop_10 = prepara_dati_top_flop(df_filtrato)
+    with col4:
+        df_top, df_flop = prepara_dati_top_flop(df_periodo) # Ricalcolo per sicurezza
+        
+        fig_flop = px.bar(df_flop, x='Margine Totale', y='Nome Piatto', orientation='h', title='Flop 10 Prodotti per Margine Totale')
+        fig_flop.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total descending'})
+        st.plotly_chart(fig_flop, use_container_width=True)
 
-        with col_top:
-            fig_top = px.bar(top_10, x='Margine Totale', y='Piatto', orientation='h', 
-                             title='Top 10 Prodotti per Margine', color_discrete_sequence=px.colors.sequential.Greens_r)
-            st.plotly_chart(fig_top, use_container_width=True)
-            
-        with col_flop:
-            fig_flop = px.bar(flop_10, x='Margine Totale', y='Piatto', orientation='h',
-                              title='Flop 10 Prodotti per Margine', color_discrete_sequence=px.colors.sequential.Reds_r)
-            st.plotly_chart(fig_flop, use_container_width=True)
-
-    else:
-        st.info("In attesa del caricamento di un file Excel per avviare l'analisi.")
+else:
+    st.info("In attesa di un file Excel per avviare l'analisi.")

@@ -1,81 +1,101 @@
-# analysis_logic.py
-
 import pandas as pd
+import numpy as np
 
-def arricchisci_dati_base(df_input):
+def calcola_metriche_derivate(df_input, quantita_col):
     """
-    Prende un DataFrame grezzo, gestisce le date e aggiunge le colonne calcolate.
+    Calcola le metriche di base per ogni prodotto (riga) del DataFrame.
+    Prende in input un DataFrame e il nome della colonna delle quantità da usare.
+    Restituisce un nuovo DataFrame con le colonne calcolate.
     """
     df = df_input.copy()
     
-    # Assicuriamoci che la colonna delle date sia nel formato corretto
-    # Cambia 'Data Vendita' con il nome esatto della tua colonna di date
-    if 'Data Vendita' in df.columns:
-        df['Data Vendita'] = pd.to_datetime(df['Data Vendita'])
-        df['Trimestre'] = df['Data Vendita'].dt.to_period('Q').astype(str)
-        df['Mese'] = df['Data Vendita'].dt.to_period('M').astype(str)
-    else:
-        # Se non ci sono date, non possiamo fare filtri temporali
-        df['Trimestre'] = 'N/D'
-        df['Mese'] = 'N/D'
-
-    # Sostituisci questi nomi con i nomi esatti delle tue colonne
-    nome_colonna_prezzo = "PrezzoVendita"
-    nome_colonna_quantita = "QuantitaVenduta"
-    nome_colonna_costo = "CostoIngredienti"
+    # Standardizza il nome della colonna delle quantità per coerenza
+    df.rename(columns={quantita_col: 'Quantita Venduta'}, inplace=True)
     
-    df['Ricavo Totale'] = df[nome_colonna_prezzo] * df[nome_colonna_quantita]
-    df['Margine Unitario'] = df[nome_colonna_prezzo] - df[nome_colonna_costo]
-    df['Margine Totale'] = df['Margine Unitario'] * df[nome_colonna_quantita]
+    # Calcoli per riga
+    df['Ricavo Totale'] = df['Prezzo Vendita'] * df['Quantita Venduta']
+    df['Margine Unitario'] = df['Prezzo Vendita'] - df['Costo Primo']
+    df['Margine Totale'] = df['Margine Unitario'] * df['Quantita Venduta']
+    
+    # Calcolo della marginalità media, con gestione della divisione per zero
+    df['Marginalità Media (%)'] = np.where(df['Prezzo Vendita'] > 0, (df['Margine Unitario'] / df['Prezzo Vendita']) * 100, 0)
     
     return df
 
 def calcola_kpi_globali(df_arricchito):
-    """Calcola i KPI aggregati per la dashboard."""
-    ricavi_totali = df_arricchito['Ricavo Totale'].sum()
-    margine_totale = df_arricchito['Margine Totale'].sum()
-    quantita_totale = df_arricchito['Quantita Vendute'].sum()
+    """
+    Calcola i KPI aggregati per il DataFrame fornito.
+    Restituisce un dizionario contenente i 4 KPI principali.
+    """
+    total_revenue = df_arricchito['Ricavo Totale'].sum()
+    total_margin = df_arricchito['Margine Totale'].sum()
+    total_units = df_arricchito['Quantita Venduta'].sum()
     
-    if ricavi_totali > 0:
-        profitto_lordo_percentuale = (margine_totale / ricavi_totali) * 100
-    else:
-        profitto_lordo_percentuale = 0
-        
-    kpi = {
-        "Ricavi Totali": ricavi_totali,
-        "Margine di Contribuzione Totale": margine_totale,
-        "Profitto Lordo Medio (%)": profitto_lordo_percentuale,
-        "Unità Vendute": quantita_totale
+    # Calcolo del profitto lordo medio ponderato sul totale
+    average_gross_profit = (total_margin / total_revenue * 100) if total_revenue > 0 else 0
+    
+    kpis = {
+        "Ricavi Totali": total_revenue,
+        "Margine di Contribuzione Totale": total_margin,
+        "Piatti Venduti": total_units,
+        "Profitto Lordo Medio (%)": average_gross_profit
     }
-    
-    return kpi
+    return kpis
 
-def prepara_dati_trimestrali(df_arricchito):
-    """Prepara i dati aggregati per trimestre per il grafico combinato."""
-    dati_trimestrali = df_arricchito.groupby('Trimestre').agg(
+def prepara_dati_trimestrali_per_grafico_annuale(df_originale):
+    """
+    Prepara i dati per il grafico di andamento annuale, calcolando
+    ricavi e margini per ogni trimestre.
+    Restituisce un DataFrame specifico per questo grafico.
+    """
+    trimestri = ['Q1', 'Q2', 'Q3', 'Q4']
+    dati_trend = []
+    for q in trimestri:
+        quantita_col = f'Vendite_{q}'
+        ricavi_q = (df_originale['Prezzo Vendita'] * df_originale[quantita_col]).sum()
+        margine_q = ((df_originale['Prezzo Vendita'] - df_originale['Costo Primo']) * df_originale[quantita_col]).sum()
+        profittabilita_q = (margine_q / ricavi_q * 100) if ricavi_q > 0 else 0
+        dati_trend.append({
+            'Trimestre': q, 
+            'Ricavi': ricavi_q, 
+            'Margine': margine_q,
+            'Profittabilità (%)': profittabilita_q
+        })
+    
+    return pd.DataFrame(dati_trend)
+
+def prepara_dati_categorie(df_arricchito):
+    """
+    Aggrega i dati per categoria.
+    Restituisce due DataFrame: uno per l'incidenza sui ricavi e uno per l'incidenza sul margine.
+    """
+    # Calcolo aggregati per categoria
+    df_cat = df_arricchito.groupby('Categoria').agg(
         Ricavi=('Ricavo Totale', 'sum'),
         Margine=('Margine Totale', 'sum')
     ).reset_index()
     
-    dati_trimestrali['Profittabilità (%)'] = (dati_trimestrali['Margine'] / dati_trimestrali['Ricavi']) * 100
-    return dati_trimestrali
+    total_revenue = df_arricchito['Ricavo Totale'].sum()
+    total_margin = df_arricchito['Margine Totale'].sum()
 
-def prepara_dati_categorie(df_arricchito):
-    """Prepara i dati aggregati per categoria per i grafici a torta e a barre."""
-    # Per il grafico a torta dei ricavi
-    incidenza_ricavi = df_arricchito.groupby('Categoria')['Ricavo Totale'].sum().reset_index()
+    # DataFrame per incidenza ricavi
+    df_ricavi_cat = df_cat[['Categoria', 'Ricavi']].copy()
+    df_ricavi_cat['Percentuale'] = (df_ricavi_cat['Ricavi'] / total_revenue * 100) if total_revenue > 0 else 0
     
-    # Per il grafico a barre della marginalità media
-    df_arricchito['Marginalità Media (%)'] = (df_arricchito['Margine Unitario'] / df_arricchito['Prezzo Vendita']) * 100
-    marginalita_media = df_arricchito.groupby('Categoria')['Marginalità Media (%)'].mean().reset_index()
-    
-    return incidenza_ricavi, marginalita_media
+    # DataFrame per incidenza margine
+    df_margine_cat = df_cat[['Categoria', 'Margine']].copy()
+    df_margine_cat['Percentuale'] = (df_margine_cat['Margine'] / total_margin * 100) if total_margin > 0 else 0
+
+    return df_ricavi_cat.sort_values('Percentuale', ascending=False), df_margine_cat.sort_values('Percentuale', ascending=False)
 
 def prepara_dati_top_flop(df_arricchito):
-    """Prepara i dati per i grafici Top/Flop 10 prodotti per margine."""
-    df_ordinato = df_arricchito.sort_values(by='Margine Totale', ascending=False)
+    """
+    Identifica i 10 migliori e i 10 peggiori prodotti per margine totale.
+    Restituisce due DataFrame.
+    """
+    df_sorted = df_arricchito.sort_values('Margine Totale', ascending=False)
     
-    top_10 = df_ordinato.head(10)
-    flop_10 = df_ordinato.tail(10).sort_values(by='Margine Totale', ascending=True)
+    df_top_10 = df_sorted.head(10)
+    df_flop_10 = df_sorted.tail(10).sort_values('Margine Totale', ascending=True)
     
-    return top_10, flop_10
+    return df_top_10, df_flop_10
