@@ -2,7 +2,13 @@
 [data-testid="stAppViewContainer"] {
     background-color: #0E1117;
 }
-
+.dashboard-container {
+    background-color: #FFFFFF;
+    color: #111111;
+    border-radius: 15px;
+    padding: 2rem;
+    border: 1px solid #DDDDDD;
+}
 /* Crea il pannello di contenuto principale chiaro con angoli arrotondati */
 /* Selettore robusto per il contenitore principale del contenuto */
 div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] {

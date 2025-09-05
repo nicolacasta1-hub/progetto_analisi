@@ -63,17 +63,17 @@ if selected == "Caricamento Dati":
 
 # --- PAGINA: DASHBOARD GLOBALE ---
 if selected == "Dashboard Globale":
-    with st.container(border=True):
-        if st.session_state['df'] is None:
-            st.warning("Nessun dato caricato. Per favore, vai alla pagina 'Caricamento Dati' e carica un file Excel.")
-            st.stop()
+    st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
+    if st.session_state['df'] is None:
+        st.warning("Nessun dato caricato. Per favore, vai alla pagina 'Caricamento Dati' e carica un file Excel.")
+        st.stop()
 
-        st.title("Dashboard Globale di Analisi Strategica")
-        raw_df = st.session_state['df']
+    st.title("Dashboard Globale di Analisi Strategica")
+    raw_df = st.session_state['df']
 
-        selected_period = st.selectbox(
-            "Seleziona Periodo di Analisi",
-            options=['Anno Intero', 'Q1', 'Q2', 'Q3', 'Q4']
+    selected_period = st.selectbox(
+        "Seleziona Periodo di Analisi",
+        options=['Anno Intero', 'Q1', 'Q2', 'Q3', 'Q4']
     )
 
     # --- LOGICA DI CALCOLO DINAMICO ---
@@ -165,6 +165,7 @@ if selected == "Dashboard Globale":
         fig_flop = px.bar(df_flop, x='Margine Totale', y='Nome Piatto', orientation='h', title='Flop 10 Prodotti per Margine Totale')
         fig_flop.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total descending', 'showgrid': False}, xaxis={'showgrid': False})
         st.plotly_chart(fig_flop, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Placeholder per le altre pagine
 else:
