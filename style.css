@@ -1,0 +1,29 @@
+/* Applica lo sfondo scuro all'intera applicazione */
+[data-testid="stAppViewContainer"] {
+    background-color: #0E1117;
+}
+/* Crea il pannello di contenuto principale chiaro con angoli arrotondati */
+/* Selettore robusto per il contenitore principale del contenuto */
+div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] {
+    background-color: #262730;
+    color: #111111;
+    border-radius: 15px;
+    padding: 2rem;
+}
+
+/* Stile per i componenti Metric (KPI Cards) */
+[data-testid="stMetric"] {
+    background-color: #262730;
+    border: 1px solid #262730;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease-in-out;
+}
+
+/* Effetto Hover per le KPI Cards */
+[data-testid="stMetric"]:hover {
+    background-color: #007BFF;
+    transform: scale(1.03);
+    cursor: pointer;
+}
