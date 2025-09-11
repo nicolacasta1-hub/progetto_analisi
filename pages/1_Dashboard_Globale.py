@@ -15,6 +15,10 @@ from logic.logic_core import (
     calcola_break_even_point,
     prepara_dati_grafico_bep
 )
+from logic.insights_logic import (
+    analizza_kpi_trends,
+    analizza_struttura_business
+)
 # --- IMPOSTAZIONI SPECIFICHE DELLA PAGINA ---
 st.set_page_config(
     layout="wide", 
@@ -59,6 +63,12 @@ if q_num > 1:
 
 # --- VISUALIZZAZIONE KPI CARDS ---
 st.divider()
+# --- CALCOLO DEGLI INSIGHTS AUTOMATICI ---
+# Insight basato sul trend del periodo selezionato
+insight_trend_list = analizza_kpi_trends(kpi_correnti_dict, kpi_precedenti_dict)
+
+# Insight strutturali basati sull'intero anno (usiamo df_annuale che abbiamo già)
+insight_strutturali_list = analizza_struttura_business(df_annuale)
 st.header("KPI Globali")
 kpi_cols = st.columns(5)
 
@@ -113,6 +123,32 @@ kpi_cols[4].metric(
         value=f"€ {bep_fatturato:,.2f}"
     )
 st.divider()
+# ##############################################################
+# ## --- NUOVA SEZIONE: VISUALIZZAZIONE INSIGHTS --- ##
+# ##############################################################
+st.subheader("🔍 Punti Chiave dall'Analisi")
+
+with st.expander("Mostra/Nascondi Commenti Strategici", expanded=True):
+    
+    # Mostra prima l'insight sul trend, se ne è stato generato uno
+    if insight_trend_list:
+        st.markdown(insight_trend_list[0])
+        st.divider()
+
+    # Mostra gli insight strutturali, solo se si sta guardando l'Anno Intero
+    if periodo_selezionato == 'Anno Intero':
+        if not insight_strutturali_list:
+            st.success("Analisi strutturale completata. Non sono state rilevate criticità o concentrazioni particolari. Il business appare ben bilanciato.")
+        else:
+            for insight in insight_strutturali_list:
+                st.markdown(insight)
+                # Aggiungiamo un separatore tra un insight e l'altro per leggibilità
+                if insight != insight_strutturali_list[-1]:
+                    st.divider()
+    
+    # Messaggio di default se non è stato trovato assolutamente nessun insight
+    if not insight_trend_list and periodo_selezionato != 'Anno Intero':
+        st.success("Analisi completata. Nessuna tendenza significativa rilevata per questo trimestre.")
 
 # --- VISUALIZZAZIONI GRAFICHE ---
 
